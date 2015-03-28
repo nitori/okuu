@@ -55,7 +55,7 @@ class Okuu:
                         .format(handler.config['name'])
                     )
 
-        response = requests.head(url)
+        response = requests.head(url, allow_redirects=True)
         for plugin in self.plugins:
             handler = plugin.check_header(url, response)
             if handler:
@@ -117,7 +117,7 @@ class BasePlugin:
     def check_url(self, url):
         pass
 
-    def check_header(self, url, header):
+    def check_header(self, url, response):
         pass
 
     def get_url_info(self, url):

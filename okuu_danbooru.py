@@ -57,6 +57,10 @@ class Danbooru(BasePlugin):
             self.id = match.group('pool_id')
             return True
 
+    def check_header(self, url, response):
+        if response.history:
+            return self.check_url(response.url)
+
     def get_url_info(self, url):
         purl = urlparse(url)
 
