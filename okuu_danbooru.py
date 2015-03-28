@@ -45,7 +45,6 @@ class Danbooru(BasePlugin):
     )
 
     def check_url(self, url):
-        logger.info('Checking if URL matches a pattern.')
         match = self.post_pattern.match(url)
         if match is not None:
             self.type = 'post'
@@ -67,7 +66,7 @@ class Danbooru(BasePlugin):
             return self.check_url(response.url)
 
     def get_url_info(self, url):
-        logger.info('Fetching URL info from Danbooru API.')
+        logger.info('Fetching URL info from Danbooru API.   ')
         purl = urlparse(url)
 
         api_url = ''

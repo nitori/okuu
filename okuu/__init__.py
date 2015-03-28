@@ -54,7 +54,7 @@ class Okuu:
                         'Handler {!r} failed getting URL infos.'
                         .format(handler.config['name'])
                     )
-
+        logger.info('No plugin matched the URL. Trying Headers next.')
         response = requests.head(url, allow_redirects=True)
         for plugin in self.plugins:
             handler = plugin.check_header(url, response)
@@ -68,6 +68,11 @@ class Okuu:
                         'Handler {!r} failed getting URL infos.'
                         .format(handler.config['name'])
                     )
+        logger.info('No plugin matched the Headers. Returning None.')
+        if response.url != url:
+            logger.info('URL was: {} -> {}'.format(url, response.url))
+        else:
+            logger.info('URL was: {}'.format(url))
         return None
 
 
