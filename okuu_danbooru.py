@@ -62,7 +62,6 @@ class Danbooru(BasePlugin):
             return True
 
     def check_header(self, url, response):
-        print(response.request.headers)
         if response.history:
             return self.check_url(response.url)
 
