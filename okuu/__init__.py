@@ -10,7 +10,7 @@ from . import utils
 
 logging.basicConfig(
     level=logging.DEBUG,
-    format='%(levelname)-8s[%(asctime)-15s] %(message)s'
+    format='%(levelname)-7s [%(asctime)-15s] (%(name)s) %(message)s'
 )
 logger = logging.getLogger(__name__)
 
