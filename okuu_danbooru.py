@@ -62,6 +62,7 @@ class Danbooru(BasePlugin):
             return True
 
     def check_header(self, url, response):
+        print(response.request.headers)
         if response.history:
             return self.check_url(response.url)
 
@@ -89,8 +90,10 @@ class Danbooru(BasePlugin):
                 purl.scheme,
                 self.id
             )
-
-        json_data = requests.get(api_url, params=params).json()
+        json_data = requests.get(
+            api_url,
+            headers=self.headers,
+            params=params).json()
         if self.type == 'direct':
             json_data = json_data[0]
 

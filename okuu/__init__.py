@@ -14,6 +14,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+__version_string__ = 'Okuu URL info script'
+
 
 class Okuu:
 
@@ -22,14 +24,19 @@ class Okuu:
         self.config.read(configfile)
         self.plugins = []
 
-        base_config = OrderedDict()
+        self.base_config = OrderedDict()
         for option in self.config.options('okuu'):
             value = self.config.get('okuu', option)
-            base_config[option] = value if value is not None else True
+            self.base_config[option] = value if value is not None else True
+
+        self.headers = {
+            'user-agent': self.base_config.get(
+                'user-agent', __version_string__)
+        }
 
         for plugin_name in self.config.options('plugins'):
             plugin_config = OrderedDict()
-            plugin_config.update(base_config)
+            plugin_config.update(self.base_config)
             plugin_config['name'] = plugin_name
             plugin_section = 'plugin-{}'.format(plugin_name)
             if plugin_section in self.config.sections():
@@ -55,7 +62,8 @@ class Okuu:
                         .format(handler.config['name'])
                     )
         logger.info('No plugin matched the URL. Trying Headers next.')
-        response = requests.head(url, allow_redirects=True)
+        response = requests.head(url, headers=self.headers,
+                                 allow_redirects=True)
         for plugin in self.plugins:
             handler = plugin.check_header(url, response)
             if handler:
@@ -118,6 +126,10 @@ class BasePlugin:
 
     def __init__(self, config):
         self.config = config
+
+        self.headers = {
+            'user-agent': config.get('user-agent', __version_string__)
+        }
 
     def check_url(self, url):
         pass
