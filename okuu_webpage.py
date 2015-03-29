@@ -37,7 +37,6 @@ class Webpage(BasePlugin):
 
         return dict(
             name='Webpage',
-            plugin='webpage',
             type=None,
             infos={
                 'page_title': page_title

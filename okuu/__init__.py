@@ -55,6 +55,7 @@ class Okuu:
                 try:
                     result = handler.get_url_info(url)
                     if result is not None:
+                        result['plugin'] = plugin.config['name']
                         return result
                 except Exception as e:
                     logger.exception(
@@ -70,6 +71,7 @@ class Okuu:
                 try:
                     result = handler.get_url_info(url)
                     if result is not None:
+                        result['plugin'] = plugin.config['name']
                         return result
                 except Exception as e:
                     logger.exception(

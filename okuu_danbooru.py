@@ -141,7 +141,6 @@ class Danbooru(BasePlugin):
     def _get_pool_data(self, json_data):
         return dict(
             name='Danbooru',
-            plugin='danbooru',
             type='pool',
             infos=OrderedDict([
                 ('name', json_data['name'].replace('_', ' ')),
