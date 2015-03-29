@@ -1,5 +1,6 @@
 __author__ = 'nitori'
 
+import json
 import sys
 
 from okuu import Okuu
@@ -11,4 +12,4 @@ if url_info is None:
     sys.exit(1)
 
 print('Okuus output:')
-print(url_info)
+print(json.dumps(url_info, indent=4))

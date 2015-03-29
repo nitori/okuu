@@ -1,6 +1,7 @@
 
 from okuu import BasePlugin
 
+from collections import OrderedDict
 from urllib.parse import urlparse
 import logging
 
@@ -71,8 +72,10 @@ class Danbooru(BasePlugin):
 
         api_url = ''
         params = {}
-        if self.config.get('api-key', None) is not None:
+        if self.config.get('api-key', None) is not None and\
+                self.config.get('login', None) is not None:
             params['api_key'] = self.config['api-key']
+            params['login'] = self.config['login']
 
         if self.type == 'post':
             api_url = '{}://danbooru.donmai.us/posts/{}.json'.format(
@@ -102,7 +105,49 @@ class Danbooru(BasePlugin):
             return self._get_pool_data(json_data)
 
     def _get_post_data(self, json_data):
-        return 'post: ' + json_data['file_url']
+        warning_tags = set(
+            map(str.lower, self.config.get('warning-tags', '').split())
+        )
+        tags = json_data['tag_string'].split()
+        # tag_string = general + artist + copyright + character
+        general_tags = json_data['tag_string_general'].split()
+        artists = json_data['tag_string_artist'].split()
+        copyright = json_data['tag_string_copyright'].split()
+        characters = json_data['tag_string_character'].split()
+        rating = {
+            's': 'safe',
+            'q': 'questionable',
+            'e': 'explicit',
+        }[json_data['rating']]
+        return dict(
+            name='Danbooru',
+            plugin='danbooru',
+            type='post',
+            infos=OrderedDict([
+                ('width', json_data.get('image_width')),
+                ('height', json_data.get('image_height')),
+                ('file_url', json_data.get('file_url')),  # might be None!
+                ('post_id', json_data['id']),
+                ('score', json_data['score']),
+                ('rating', rating),
+                ('warning_tags', sorted(warning_tags.intersection(tags))),
+                ('general_tags', sorted(general_tags)),
+                ('artists', sorted(artists)),
+                ('copyright', sorted(copyright)),
+                ('characters', sorted(characters)),
+            ])
+        )
 
     def _get_pool_data(self, json_data):
-        return 'pool: ' + json_data['name']
+        return dict(
+            name='Danbooru',
+            plugin='danbooru',
+            type='pool',
+            infos=OrderedDict([
+                ('name', json_data['name'].replace('_', ' ')),
+                ('pool_id', json_data['id']),
+                ('post_count', json_data['post_count']),
+                ('category', json_data['category']),
+                ('description', json_data['description']),
+            ])
+        )
