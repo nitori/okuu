@@ -61,7 +61,7 @@ class YouTube(BasePlugin):
         return dict(
             name='YouTube',
             plugin='youtube',
-            # type='video',
+            type=None,
             infos=OrderedDict([
                 ('status', 'ok'),
                 ('result', json_data['items'][0]),
