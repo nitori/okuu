@@ -41,6 +41,6 @@ class Webpage(BasePlugin):
             infos={
                 'page_title': page_title,
                 'history_urls': self.history_urls,
-                'redirected_to_url': self.redirected_to_url,
+                'endpoint': self.redirected_to_url,
             }
         )
