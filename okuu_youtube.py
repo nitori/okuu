@@ -6,7 +6,6 @@ from urllib.parse import urlparse, parse_qs
 import logging
 
 import requests
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +50,14 @@ class YouTube(BasePlugin):
             'https://www.googleapis.com/youtube/v3/videos',
             headers=self.headers,
             params=params).json()
+
+        if 'error' in json_data:
+            error = json_data['error']
+            message = '{code}: {message}\n'.format(**error)
+            for sub_error in error['errors']:
+                for key, value in sub_error.items():
+                    message += '    {}: {}\n'.format(key, value)
+            raise Exception(message)
 
         if not json_data['pageInfo']['totalResults']:
             return dict(
