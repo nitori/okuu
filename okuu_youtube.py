@@ -5,7 +5,7 @@ from collections import OrderedDict
 from urllib.parse import urlparse, parse_qs
 import logging
 
-import requests
+import aiohttp
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class YouTube(BasePlugin):
     https://www.googleapis.com/youtube/v3/videos?id=<video-id>&key=<api-key>&part=<parts>
     """
 
-    def check_url(self, url):
+    async def check_url(self, url):
         urlp = urlparse(url)
         if urlp.netloc in ('www.youtube.com', 'youtube.com'):
             if urlp.path.startswith('/watch'):
@@ -34,11 +34,11 @@ class YouTube(BasePlugin):
             if self.video_id:
                 return True
 
-    def check_header(self, url, response):
+    async def check_header(self, url, response):
         if response.history:
-            return self.check_url(response.url)
+            return await self.check_url(response.url)
 
-    def get_url_info(self, url):
+    async def get_url_info(self, url):
         logger.info('Fetching URL info from YouTube Data APIv3.   ')
         parts = [s.strip() for s in self.config['api-parts'].split(',')]
         params = {
@@ -46,10 +46,11 @@ class YouTube(BasePlugin):
             'key': self.config['api-key'],
             'part': ','.join(parts),
         }
-        json_data = requests.get(
-            'https://www.googleapis.com/youtube/v3/videos',
-            headers=self.headers,
-            params=params).json()
+        async with aiohttp.get(
+                'https://www.googleapis.com/youtube/v3/videos',
+                headers=self.headers,
+                params=params) as resp:
+            json_data = await resp.json()
 
         if 'error' in json_data:
             error = json_data['error']

@@ -4,12 +4,12 @@ import configparser
 from collections import OrderedDict
 import logging
 
-import requests
+import aiohttp
 
 from . import utils
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.ERROR,
     format='%(levelname)-7s [%(asctime)-15s] (%(name)s) %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -47,13 +47,13 @@ class Okuu:
             plugin = Plugin(plugin_config)
             self.plugins.append(plugin)
 
-    def get_url_info(self, url):
+    async def get_url_info(self, url):
         for plugin in self.plugins:
             plugin.import_module()
-            handler = plugin.check_url(url)
+            handler = await plugin.check_url(url)
             if handler:
                 try:
-                    result = handler.get_url_info(url)
+                    result = await handler.get_url_info(url)
                     if result is not None:
                         result['plugin'] = plugin.config['name']
                         return result
@@ -63,26 +63,26 @@ class Okuu:
                         .format(handler.config['name'])
                     )
         logger.info('No plugin matched the URL. Trying Headers next.')
-        response = requests.head(url, headers=self.headers,
-                                 allow_redirects=True)
-        for plugin in self.plugins:
-            handler = plugin.check_header(url, response)
-            if handler:
-                try:
-                    result = handler.get_url_info(url)
-                    if result is not None:
-                        result['plugin'] = plugin.config['name']
-                        return result
-                except Exception as e:
-                    logger.exception(
-                        'Handler {!r} failed getting URL infos.'
-                        .format(handler.config['name'])
-                    )
-        logger.info('No plugin matched the Headers. Returning None.')
-        if response.url != url:
-            logger.info('URL was: {} -> {}'.format(url, response.url))
-        else:
-            logger.info('URL was: {}'.format(url))
+
+        async with aiohttp.head(url, headers=self.headers) as response:
+            for plugin in self.plugins:
+                handler = await plugin.check_header(url, response)
+                if handler:
+                    try:
+                        result = await handler.get_url_info(url)
+                        if result is not None:
+                            result['plugin'] = plugin.config['name']
+                            return result
+                    except Exception as e:
+                        logger.exception(
+                            'Handler {!r} failed getting URL infos.'
+                            .format(handler.config['name'])
+                        )
+            logger.info('No plugin matched the Headers. Returning None.')
+            if response.url != url:
+                logger.info('URL was: {} -> {}'.format(url, response.url))
+            else:
+                logger.info('URL was: {}'.format(url))
         return None
 
 
@@ -104,15 +104,15 @@ class Plugin:
                     and issubclass(obj, BasePlugin):
                 self._url_handlers.append(obj(self.config))
 
-    def check_url(self, url):
+    async def check_url(self, url):
         for handler in self._url_handlers:
-            value = handler.check_url(url)
+            value = await handler.check_url(url)
             if value:
                 return handler
 
-    def check_header(self, url, response):
+    async def check_header(self, url, response):
         for handler in self._url_handlers:
-            value = handler.check_header(url, response)
+            value = await handler.check_header(url, response)
             if value:
                 return handler
 
@@ -133,11 +133,11 @@ class BasePlugin:
             'user-agent': config.get('user-agent', __version_string__)
         }
 
-    def check_url(self, url):
+    async def check_url(self, url):
         pass
 
-    def check_header(self, url, response):
+    async def check_header(self, url, response):
         pass
 
-    def get_url_info(self, url):
+    async def get_url_info(self, url):
         pass

@@ -5,7 +5,7 @@ from collections import OrderedDict
 from urllib.parse import urlparse
 import logging
 
-import requests
+import aiohttp
 import re
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class Danbooru(BasePlugin):
         r'(?:(/|\?|#).*)?$'
     )
 
-    def check_url(self, url):
+    async def check_url(self, url):
         match = self.post_pattern.match(url)
         if match is not None:
             self.type = 'post'
@@ -62,11 +62,11 @@ class Danbooru(BasePlugin):
             self.id = match.group('pool_id')
             return True
 
-    def check_header(self, url, response):
+    async def check_header(self, url, response: aiohttp.client.ClientResponse):
         if response.history:
-            return self.check_url(response.url)
+            return await self.check_url(response.url)
 
-    def get_url_info(self, url):
+    async def get_url_info(self, url):
         logger.info('Fetching URL info from Danbooru API.   ')
         purl = urlparse(url)
 
@@ -92,7 +92,7 @@ class Danbooru(BasePlugin):
                 purl.scheme,
                 self.id
             )
-        json_data = requests.get(
+        json_data = await aiohttp.get(
             api_url,
             headers=self.headers,
             params=params).json()
