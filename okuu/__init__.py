@@ -48,12 +48,14 @@ class Okuu:
             self.plugins.append(plugin)
 
     async def get_url_info(self, url):
+        session = aiohttp.ClientSession()
+
         for plugin in self.plugins:
             plugin.import_module()
             handler = await plugin.check_url(url)
             if handler:
                 try:
-                    result = await handler.get_url_info(url)
+                    result = await handler.get_url_info(url, session)
                     if result is not None:
                         result['plugin'] = plugin.config['name']
                         return result
@@ -64,12 +66,13 @@ class Okuu:
                     )
         logger.info('No plugin matched the URL. Trying Headers next.')
 
-        async with aiohttp.head(url, headers=self.headers) as response:
+        async with session.head(url, headers=self.headers) as response:
             for plugin in self.plugins:
-                handler = await plugin.check_header(url, response)
+                handler = await plugin.check_header(url, response, session)
+                response.close()
                 if handler:
                     try:
-                        result = await handler.get_url_info(url)
+                        result = await handler.get_url_info(url, session)
                         if result is not None:
                             result['plugin'] = plugin.config['name']
                             return result
@@ -110,9 +113,9 @@ class Plugin:
             if value:
                 return handler
 
-    async def check_header(self, url, response):
+    async def check_header(self, url, response, session):
         for handler in self._url_handlers:
-            value = await handler.check_header(url, response)
+            value = await handler.check_header(url, response, session)
             if value:
                 return handler
 
@@ -136,8 +139,8 @@ class BasePlugin:
     async def check_url(self, url):
         pass
 
-    async def check_header(self, url, response):
+    async def check_header(self, url, response, session):
         pass
 
-    async def get_url_info(self, url):
+    async def get_url_info(self, url, session):
         pass
